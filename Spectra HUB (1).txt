@@ -2888,7 +2888,7 @@ local CarTab = Window:MakeTab({
     Icon = "rbxassetid://7733708835"
 })
 
-CarTab:AddSection({"Speed Car/Boat & Turbo"})
+CarTab:AddSection({"Speed e turbo em Car | boat"})
 
 --==================================================
 -- VALORES
@@ -3049,7 +3049,7 @@ CarTab:AddButton({
     end
 })
 
-CarTab:AddSection({"loops"})
+CarTab:AddSection({"loops use dentro de um carro"})
 
 --=============================================================================
 -- REMOTES DE VEÍCULO (LOOPS 0.5s)
@@ -3158,6 +3158,222 @@ CarTab:AddToggle({
                 task.wait(0.5)
             end
         end)
+    end
+})
+
+
+
+--==============================
+-- SUSPENSION REMOTE (VEL 20 FIXA)
+--==============================
+
+local suspensionRemoteToggle = false
+local suspensionDelay = 0.5 - (20 * 0.018)
+
+if suspensionDelay < 0.01 then
+    suspensionDelay = 0.01
+end
+
+CarTab:AddSection("Suspension loop")
+
+CarTab:AddToggle({
+    Name = "Suspension loop",
+    Default = false,
+    Callback = function(state)
+
+        suspensionRemoteToggle = state
+
+        if state then
+            spawn(function()
+                while suspensionRemoteToggle do
+
+                    pcall(function()
+                        game:GetService("ReplicatedStorage")
+                            .Remotes
+                            .SetNextSuspensionHeight
+                            :InvokeServer()
+                    end)
+
+                    task.wait(suspensionDelay)
+                end
+            end)
+        end
+    end
+})
+
+
+
+--==============================
+-- WHEEL REMOTE SPEED
+--==============================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local wheelSpeed = 10
+local wheelToggle = false
+
+CarTab:AddSection("mudar roda Speed loop")
+
+CarTab:AddSlider({
+    Name = "Velocidade (1 - 25)",
+    Range = {1, 25},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 10,
+    Callback = function(value)
+        wheelSpeed = value
+    end
+})
+
+CarTab:AddToggle({
+    Name = "mudar roda loop",
+    Default = false,
+    Callback = function(state)
+
+        wheelToggle = state
+
+        if state then
+            spawn(function()
+                while wheelToggle do
+                    pcall(function()
+                        ReplicatedStorage.Remotes.SetWheelDecal:InvokeServer()
+                    end)
+
+                    -- quanto maior o número mais rápido
+                    local delay = 0.5 - (wheelSpeed * 0.018)
+
+                    if delay < 0.01 then
+                        delay = 0.01
+                    end
+
+                    task.wait(delay)
+                end
+            end)
+        end
+    end
+})
+
+
+
+CarTab:AddSection("speed turbo car mas agressivo não vai funcionar em boat")
+
+local speedValue = 200
+local turboValue = 11.3
+local driftValue = 1
+
+local Workspace = game:GetService("Workspace")
+
+--==============================
+-- PEGAR CARROS
+--==============================
+
+local function getAllCars()
+    local cars = {}
+
+    if workspace:FindFirstChild("Vehicles") then
+        for _, vehicle in pairs(workspace.Vehicles:GetChildren()) do
+            if vehicle:FindFirstChild("Seats") 
+            and vehicle.Seats:FindFirstChild("VehicleSeat") then
+                table.insert(cars, vehicle)
+            end
+        end
+    end
+
+    return cars
+end
+
+--==============================
+-- APLICAR
+--==============================
+
+local function applyToAllCars(valueType, value)
+
+    local cars = getAllCars()
+
+    for _, vehicle in pairs(cars) do
+        local seat = vehicle.Seats.VehicleSeat
+
+        local obj = seat:FindFirstChild(valueType)
+
+        if obj then
+            pcall(function()
+                obj.Value = value
+            end)
+        else
+            pcall(function()
+                seat[valueType] = value
+            end)
+        end
+    end
+end
+
+--==============================
+-- SECTION
+--==============================
+
+CarTab:AddSection("Car Settings")
+
+--==============================
+-- INPUTS
+--==============================
+
+CarTab:AddTextBox({
+    Name = "MaxSpeed",
+    PlaceholderText = "200",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then
+            speedValue = num
+        end
+    end
+})
+
+CarTab:AddTextBox({
+    Name = "Turbo",
+    PlaceholderText = "11.3",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then
+            turboValue = num
+        end
+    end
+})
+
+CarTab:AddTextBox({
+    Name = "Drift",
+    PlaceholderText = "1",
+    Callback = function(val)
+        local num = tonumber(val)
+        if num then
+            driftValue = num
+        end
+    end
+})
+
+--==============================
+-- BOTOES
+--==============================
+
+CarTab:AddSection("Aplicar")
+
+CarTab:AddButton({
+    Name = "Aplicar Speed",
+    Callback = function()
+        applyToAllCars("MaxSpeed", speedValue)
+    end
+})
+
+CarTab:AddButton({
+    Name = "Aplicar Turbo",
+    Callback = function()
+        applyToAllCars("Turbo", turboValue)
+    end
+})
+
+CarTab:AddButton({
+    Name = "Aplicar Drift",
+    Callback = function()
+        applyToAllCars("DriftStrength", driftValue)
     end
 })
 
